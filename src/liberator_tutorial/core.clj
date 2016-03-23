@@ -1,8 +1,10 @@
 (ns liberator-tutorial.core
   (:require [liberator.core :refer [resource defresource]]
+            [liberator.dev :refer [wrap-trace]]
             [ring.middleware.params :refer [wrap-params]]
             [compojure.core :refer [defroutes ANY]]))
 
+(def dbg-counter (atom 0))
 
 (defresource secret
   :available-media-types ["text/html"]
@@ -26,6 +28,13 @@
                      (format "<html>There is no value for the option &quot;%s&quot;"
                              (get-in ctx [:request :params "choice"] ""))))
 
+(defresource dbg-resource
+  :available-media-types ["text/plain"]
+  :allowed-methods [:get :post]
+  :handle-ok (fn [_] (format "The counter is %d" @dbg-counter))
+  :post! (fn [_] (swap! dbg-counter inc)))
+
+
 (defroutes app
   (ANY "/secret" []
        secret)
@@ -36,4 +45,9 @@
   (-> app
       wrap-params))
 
+(defroutes dbg
+  (ANY "/dbg-count" [] dbg-resource))
 
+(def handler
+  (-> dbg
+      (wrap-trace :header :ui)))
