@@ -46,6 +46,15 @@
   :last-modified (* 10000 (long  (/ (System/currentTimeMillis) 10000)))
   :handle-ok (fn [_] (format "It's now %s" (java.util.Date.))))
 
+
+(defresource changetag
+  :available-media-types ["text/plain"]
+  ;; etag changes every 10s
+  :etag (let [i (int (mod (/ (System/currentTimeMillis) 10000) 10))]
+          (.substring "abcdefhghijklmnopqrst"  i (+ i 10)))
+  :handle-ok (format "It's now %s" (java.util.Date.)))
+
+
 (defroutes app
   (ANY "/secret" []
        secret)
@@ -54,7 +63,9 @@
   (ANY "/babel" []
        babel)
   (ANY "/timehop" []
-       timehop))
+       timehop)
+  (ANY "/changetag" []
+       changetag))
 
 (def handler
   (-> app
