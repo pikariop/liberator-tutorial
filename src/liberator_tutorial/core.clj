@@ -39,13 +39,22 @@
      :media-type media-type}))
   :handle-not-acceptable "Uh, Oh, I cannot speak those languages!")
 
+
+(defresource timehop
+  :available-media-types ["text/plain"]
+  ;; timestamp changes every 10s
+  :last-modified (* 10000 (long  (/ (System/currentTimeMillis) 10000)))
+  :handle-ok (fn [_] (format "It's now %s" (java.util.Date.))))
+
 (defroutes app
   (ANY "/secret" []
        secret)
   (ANY "/choice" []
        choice)
   (ANY "/babel" []
-       babel))
+       babel)
+  (ANY "/timehop" []
+       timehop))
 
 (def handler
   (-> app
