@@ -54,6 +54,33 @@
           (.substring "abcdefhghijklmnopqrst"  i (+ i 10)))
   :handle-ok (format "It's now %s" (java.util.Date.)))
 
+(def posts (ref []))
+
+(defresource postbox
+  :allowed-methods [:post :get]
+  :available-media-types ["text/html"]
+  :handle-ok (fn [ctx]
+               (format (str "<html>Post text/plain to this resource.<br>\n"
+                            "There are %d posts at the moment.</html>")
+                       (count @posts)))
+  :post! (fn [ctx]
+           (dosync
+             (let [body (slurp (get-in ctx [:request :body]))
+                   id   (count (alter posts conj body))]
+               {::id id})))
+  ;; actually http requires absolute urls for redirect but let's
+  ;; keep things simple.
+  :post-redirect? (fn [ctx] {:location (format "/postbox/%s" (::id ctx))})
+  :etag (fn [_] (str (count @posts))))
+
+(defresource postbox-get [x]
+  :allowed-methods [:get]
+  :available-media-types ["application/json"]
+  :exists? (fn [ctx]
+             (if-let [d (get @posts (dec (Integer/parseInt x)))]
+               {::data d}))
+  :handle-ok ::data)
+
 
 (defroutes app
   (ANY "/secret" []
@@ -65,7 +92,11 @@
   (ANY "/timehop" []
        timehop)
   (ANY "/changetag" []
-       changetag))
+       changetag)
+  (ANY "/postbox" []
+       postbox)
+  (ANY "/postbox/:x" [x]
+      (postbox-get x)))
 
 (def handler
   (-> app
