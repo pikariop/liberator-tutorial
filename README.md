@@ -1,6 +1,6 @@
 # liberator-tutorial
 
-http://clojure-liberator.github.io tutorial
+http://clojure-liberator.github.io/liberator/
 
 ## Usage
 
